@@ -77,7 +77,7 @@
 		var rect_width = 55;
 		var rect_height = 35;
 		function resetGame(){
-			//Resets the game to look the same way it did at the start
+			//Resets the game to look the same way it did at the beginning
 			document.getElementById("tester").style.visibility = "visible";
 			document.getElementById("level_radio_easy").style.visibility = "visible";
 			document.getElementById("level_radio_medium").style.visibility = "visible";
@@ -89,7 +89,7 @@
 			var msg_score = document.getElementById("msg");
 			msg_score.innerHTML = "";
 			var ctx = document.getElementById("area").getContext("2d");
-			//Goes through each block and gets rid of any snake or food from the previous game
+			//Goes through each block and gets rid of any snake or food colour blocks from the previous game
 			for(i=0;i<rect_width;i++){
 				for(j=0;j<rect_height;j++){
 					ctx.clearRect(i * 10, j * 10, 10, 10);
@@ -131,19 +131,18 @@
 			active = 0;
 			document.querySelector('h1').style.visibility = "hidden";
 			setInterval(function(){
-			document.querySelector('body').style.background = colors[active];
-			active++;
-			if (active == colors.length){
-				active = 0;
-			}
-		}, 3500);
+				document.querySelector('body').style.background = colors[active];
+				active++;
+				if(active == colors.length){
+						active = 0;
+				}
+			}, 3500);
 			var cur_high_score = localStorage.getItem("high_score");
 			var cur_person = localStorage.getItem("person");
 			var level = levelNum;
 			var inc_score = 50;
 			var snake_colour = "#000000"
 			var eat_colour = "#ffff00"
-			var ctx;
 			var tn = [];
 			var x_direction = [-1,0,1,0];
 			var y_direction = [0,-1,0,1];
@@ -159,13 +158,14 @@
 			var sum = 0;
 			var i;
 			var c = document.getElementById("area");
-			ctx = c.getContext("2d");
+			var ctx = c.getContext("2d");
 			for(i=0;i<rect_width;i++){
 				map[i] = [];
 			}
 
-			function readFrog(){
-				var x, y;
+			function makeFood(){
+				var x;
+				var y;
 				do{
 					x = MR() * rect_width | 0;
 					y = MR() * rect_height | 0;
@@ -174,9 +174,9 @@
 
 				map[x][y] = 1;
 				ctx.fillStyle = eat_colour;
-				ctx.fillRect(x * 10 + 1, y * 10 + 1, 8, 8);
+				ctx.fillRect(x * 10, y * 10, 8, 8);
 			}
-			readFrog();
+			makeFood();
 
 			function setGameSpeed(){
 				--inc_score;
@@ -199,10 +199,10 @@
 					Y = 0;
 				}
 				if(((0 <= X && 0 <= Y && X < rect_width && Y < rect_height)) && 2 !== map[X][Y]){
-					if(1 == map[X][Y]){
+					if(map[X][Y] == 1){
 						score += Math.max(5, inc_score);
 						inc_score = 50;
-						readFrog();
+						makeFood();
 						frog++;
 					}
 					ctx.fillRect(X*10,Y*10,10,10);
