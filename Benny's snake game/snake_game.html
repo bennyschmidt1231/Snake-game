@@ -32,7 +32,6 @@
 	    	padding: 0;
 			margin: 0;
 			background: #077ef4;
-			/*background: linear-gradient(#f20c0c, #e25604);*/
 			color: #fff;
 			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 			padding: 15px 20px;
@@ -51,7 +50,7 @@
 			get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + currentHighScore  +" (" + currentPersonHighScore  + ")";
 		}
 	}
-		//Music
+		//Random Music
 		var lastSong = null;
 		var secondLastSong = null;
 		var selection = null;
@@ -62,22 +61,23 @@
 
 		function selectSong(){
 			while(selection == lastSong || selection == secondLastSong){ // Repeat until different song is selected
-				selection = Math.floor(Math.random() * playlist.length);7
+				selection = Math.floor(Math.random() * playlist.length);
 			}
 			secondLastSong = lastSong;
 			lastSong = selection;
 			player.src = "Music/" + playlist[selection];
 		}
 
-		selectSong(); // Select initial song
-		player.play(); // Start Song
-		var colors = ['#ff0077','green', '#b000cc', 'blue', '#ff0000',]; // Colours in the background
-		var active = 0;
+		selectSong(); //Select initial song
+		player.play(); //Start Song
+		var colours = ['#ff0077','green', '#b000cc', 'blue', '#ff0000',]; //Colours for the background
+		var count = 0;
 		var dir;
 		var rect_width = 55;
 		var rect_height = 35;
+
 		function resetGame(){
-			//Resets the game to look the same way it did at the beginning
+			//Resets the game to look the same way it did at the beginning. Hides all previous elements
 			document.getElementById("tester").style.visibility = "visible";
 			document.getElementById("level_radio_easy").style.visibility = "visible";
 			document.getElementById("level_radio_medium").style.visibility = "visible";
@@ -95,6 +95,7 @@
 					ctx.clearRect(i * 10, j * 10, 10, 10);
 				}
 			}
+			//Gets highscore in case the previous highscore was brocken
 			high_score = localStorage.getItem("high_score");
 			person = localStorage.getItem("person");
 		}
@@ -102,41 +103,41 @@
 			var easy_checked = document.getElementById("level_radio_easy").checked;
 			var medium_checked = document.getElementById("level_radio_medium").checked;
 			var hard_checked = document.getElementById("level_radio_hard").checked;
-			document.getElementById("tester").style.visibility = "hidden";
-			document.getElementById("level_radio_easy").style.visibility = "hidden";
-			document.getElementById("level_radio_medium").style.visibility = "hidden";
-			document.getElementById("level_radio_hard").style.visibility = "hidden";
-			document.getElementById("start_button").style.visibility ="hidden";
 			if(easy_checked){
-				playGame(140);
+				playGame(150);
 			}
 			else if(medium_checked){
-				playGame(90);
+				playGame(100);
 			}
 			else if(hard_checked){
 				playGame(60);
 			}
 			else{
-				document.getElementById("tester").style.visibility = "visible";
-				document.getElementById("level_radio_easy").style.visibility = "visible";
-				document.getElementById("level_radio_medium").style.visibility = "visible";
-				document.getElementById("level_radio_hard").style.visibility = "visible";
-				document.getElementById("start_button").style.visibility ="visible";
-				alert("Please select an option :)");
+				alert("Please select a difficulty :)");
 			}
 
 		}
 		function playGame(levelNum){
+			//Hide all previous elements
+			document.getElementById("tester").style.visibility = "hidden";
+			document.getElementById("level_radio_easy").style.visibility = "hidden";
+			document.getElementById("level_radio_medium").style.visibility = "hidden";
+			document.getElementById("level_radio_hard").style.visibility = "hidden";
+			document.getElementById("start_button").style.visibility ="hidden";
+
 			document.querySelector('canvas').style.visibility = "visible";
-			active = 0;
 			document.querySelector('h1').style.visibility = "hidden";
+
+			// Changes the background colour with the colours in the list
+			count = 0;
 			setInterval(function(){
-				document.querySelector('body').style.background = colors[active];
-				active++;
-				if(active == colors.length){
-						active = 0;
+				document.querySelector('body').style.background = colours[count];
+				count++;
+				if(count == colours.length){
+						count = 0;
 				}
 			}, 3500);
+
 			var cur_high_score = localStorage.getItem("high_score");
 			var cur_person = localStorage.getItem("person");
 			var level = levelNum;
@@ -147,7 +148,7 @@
 			var x_direction = [-1,0,1,0];
 			var y_direction = [0,-1,0,1];
 			var queue = [];
-			var frog = 1;
+			var food = 1;
 			var map = [];
 			var MR = Math.random;
 			var X = 5 + (MR() * (rect_width - 10))|0;
@@ -159,13 +160,16 @@
 			var i;
 			var c = document.getElementById("area");
 			var ctx = c.getContext("2d");
-			for(i=0;i<rect_width;i++){
+
+			// Creates a map of the playing area
+			for(i=0; i < rect_width; i++){
 				map[i] = [];
 			}
 
 			function makeFood(){
 				var x;
 				var y;
+				// Randomly selects a spot that is not taken up by the snake to place food
 				do{
 					x = MR() * rect_width | 0;
 					y = MR() * rect_height | 0;
@@ -174,7 +178,7 @@
 
 				map[x][y] = 1;
 				ctx.fillStyle = eat_colour;
-				ctx.fillRect(x * 10, y * 10, 8, 8);
+				ctx.fillRect(x * 10, y * 10, 9, 9);
 			}
 			makeFood();
 
@@ -186,6 +190,8 @@
 						direction = dir;
 					}
 				}
+
+				//Go through walls
 				if(X < 0){
 					X = rect_width - 1;
 				}
@@ -198,25 +204,29 @@
 				if(Y >= rect_height){
 					Y = 0;
 				}
-				if(((0 <= X && 0 <= Y && X < rect_width && Y < rect_height)) && 2 !== map[X][Y]){
+
+				//Ate food
+				if(map[X][Y] != 2){
 					if(map[X][Y] == 1){
 						score += Math.max(5, inc_score);
 						inc_score = 50;
 						makeFood();
-						frog++;
+						food++;
 					}
 					ctx.fillRect(X*10,Y*10,10,10);
 					map[X][Y] = 2;
 					queue.unshift([X,Y]);
-					X+= x_direction[direction];
-					Y+= y_direction[direction];
-					if(frog < queue.length){
+					X += x_direction[direction];
+					Y += y_direction[direction];
+					if(food < queue.length){
 						dir = queue.pop();
 						map[dir[0]][dir[1]] = 0;
 						ctx.clearRect(dir[0] * 10, dir[1] * 10, 10, 10);
 						ctx.fillStyle = snake_colour
 					}
 				}
+
+				//Lost game, ate itself
 				else if(!tn.length){
 					var msg_score = document.getElementById("msg");
 					var msg_header = document.getElementById("header");
@@ -246,10 +256,10 @@
 			interval = window.setInterval(setGameSpeed, level);
 			document.onkeydown = function(e){
 				var code = e.keyCode - 37;
-				if(0 <= code && code <4 &&code!==tn[0]){
+				if(0 <= code && code < 4 && code !== tn[0]){
 					tn.unshift(code);
 				}
-				else if(-5==code){
+				else if(-5 == code){
 					if(interval){
 						window.clearInterval(interval);
 						interval = 0;
@@ -260,10 +270,9 @@
 				}
 				else{
 					dir = sum + code;
-					if(dir==44||dir==94||dir==126||dir==171){
+					if(dir == 44 || dir == 94 || dir == 126 || dir == 171){
 						sum += code;
 					}
-					else if(dir === 218) easy = 1;
 				}
 			}
 		}
