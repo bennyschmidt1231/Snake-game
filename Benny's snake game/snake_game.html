@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="icon" href="snake_icon.jpg">
+<audio id="audioplayer"></audio>
+<head>
+	<meta charset="utf-8">
+	<title>Benny's Snake Game</title>
+	<style type="text/css">
+		body {
+			text-align:center;
+		}
+		canvas {
+			border:3px dotted #ffffff;
+			visibility: hidden;
+			padding: 0;
+			margin: 0;
+		}
+		body {
+			padding: 0;
+			margin: 0;
+			background: blue;
+			transition: background 1.5s;
+		}
+		h1 {
+			padding: 0;
+			margin: 0;
+			font-size: 20px; 
+			font-family: Helvetica;
+			visibility: visible;
+		}
+		.my_text{
+	    	padding: 0;
+			margin: 0;
+			background: #077ef4;
+			/*background: linear-gradient(#f20c0c, #e25604);*/
+			color: #fff;
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			padding: 15px 20px;
+		}
+	</style>
+	<script type="text/javascript">
+	window.onload = function(){
+		//Sets up the header to display the current highscore, displays None if no one has played the game yet
+		var get_header = document.getElementById("header");
+		var currentHighScore = localStorage.getItem("high_score");
+		var currentPersonHighScore = localStorage.getItem("person");
+		if(currentPersonHighScore == undefined){
+			get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: None";
+		}
+		else{
+			get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + currentHighScore  +" (" + currentPersonHighScore  + ")";
+		}
+	}
+		//Music
+		var lastSong = null;
+		var secondLastSong = null;
+		var selection = null;
+		var playlist = ["despacito.mp3", "shape_of_you.mp3", "never_give_up.mp3", "fireflies.mp3", "warriors.mp3", "chandelier.mp3", "team.mp3"]; // Songs in Music folder
+		var player = document.getElementById("audioplayer"); // Get Audio Element
+		player.autoplay=true;
+		player.addEventListener("ended", selectSong); // Get a new song when song ends
+
+		function selectSong(){
+			while(selection == lastSong || selection == secondLastSong){ // Repeat until different song is selected
+				selection = Math.floor(Math.random() * playlist.length);7
+			}
+			secondLastSong = lastSong;
+			lastSong = selection;
+			player.src = "Music/" + playlist[selection];
+		}
+
+		selectSong(); // Select initial song
+		player.play(); // Start Song
+		var colors = ['#ff0077','green', '#b000cc', 'blue', '#ff0000',]; // Colours in the background
+		var active = 0;
+		var dir;
+		var rect_width = 55;
+		var rect_height = 35;
+		function resetGame(){
+			//Resets the game to look the same way it did at the start
+			document.getElementById("tester").style.visibility = "visible";
+			document.getElementById("level_radio_easy").style.visibility = "visible";
+			document.getElementById("level_radio_medium").style.visibility = "visible";
+			document.getElementById("level_radio_hard").style.visibility = "visible";
+			document.getElementById("start_button").style.visibility ="visible";
+			document.querySelector('h1').style.visibility = "visible";
+			document.getElementById("msg").style.visibility = "hidden";
+			document.getElementById("play_button").style.visibility = "hidden";
+			var msg_score = document.getElementById("msg");
+			msg_score.innerHTML = "";
+			var ctx = document.getElementById("area").getContext("2d");
+			//Goes through each block and gets rid of any snake or food from the previous game
+			for(i=0;i<rect_width;i++){
+				for(j=0;j<rect_height;j++){
+					ctx.clearRect(i * 10, j * 10, 10, 10);
+				}
+			}
+			high_score = localStorage.getItem("high_score");
+			person = localStorage.getItem("person");
+		}
+		function startGame(){
+			var easy_checked = document.getElementById("level_radio_easy").checked;
+			var medium_checked = document.getElementById("level_radio_medium").checked;
+			var hard_checked = document.getElementById("level_radio_hard").checked;
+			document.getElementById("tester").style.visibility = "hidden";
+			document.getElementById("level_radio_easy").style.visibility = "hidden";
+			document.getElementById("level_radio_medium").style.visibility = "hidden";
+			document.getElementById("level_radio_hard").style.visibility = "hidden";
+			document.getElementById("start_button").style.visibility ="hidden";
+			if(easy_checked){
+				playGame(140);
+			}
+			else if(medium_checked){
+				playGame(90);
+			}
+			else if(hard_checked){
+				playGame(60);
+			}
+			else{
+				document.getElementById("tester").style.visibility = "visible";
+				document.getElementById("level_radio_easy").style.visibility = "visible";
+				document.getElementById("level_radio_medium").style.visibility = "visible";
+				document.getElementById("level_radio_hard").style.visibility = "visible";
+				document.getElementById("start_button").style.visibility ="visible";
+				alert("Please select an option :)");
+			}
+
+		}
+		function playGame(levelNum){
+			document.querySelector('canvas').style.visibility = "visible";
+			active = 0;
+			document.querySelector('h1').style.visibility = "hidden";
+			setInterval(function(){
+			document.querySelector('body').style.background = colors[active];
+			active++;
+			if (active == colors.length){
+				active = 0;
+			}
+		}, 3500);
+			var cur_high_score = localStorage.getItem("high_score");
+			var cur_person = localStorage.getItem("person");
+			var level = levelNum;
+			var inc_score = 50;
+			var snake_colour = "#000000"
+			var eat_colour = "#ffff00"
+			var ctx;
+			var tn = [];
+			var x_direction = [-1,0,1,0];
+			var y_direction = [0,-1,0,1];
+			var queue = [];
+			var frog = 1;
+			var map = [];
+			var MR = Math.random;
+			var X = 5 + (MR() * (rect_width - 10))|0;
+			var Y = 5 + (MR() * (rect_height - 10))|0;
+			var direction = MR() * 3 | 0;
+			var interval = 0;
+			var score = 0;
+			var sum = 0;
+			var i;
+			var c = document.getElementById("area");
+			ctx = c.getContext("2d");
+			for(i=0;i<rect_width;i++){
+				map[i] = [];
+			}
+
+			function readFrog(){
+				var x, y;
+				do{
+					x = MR() * rect_width | 0;
+					y = MR() * rect_height | 0;
+				}
+				while(map[x][y]);
+
+				map[x][y] = 1;
+				ctx.fillStyle = eat_colour;
+				ctx.fillRect(x * 10 + 1, y * 10 + 1, 8, 8);
+			}
+			readFrog();
+
+			function setGameSpeed(){
+				--inc_score;
+				if(tn.length){
+					dir = tn.pop();
+					if((dir %2) !== (direction % 2)){
+						direction = dir;
+					}
+				}
+				if(X < 0){
+					X = rect_width - 1;
+				}
+				if(Y < 0){
+					Y = rect_height - 1;
+				}
+				if(X >= rect_width){
+					X = 0;
+				}
+				if(Y >= rect_height){
+					Y = 0;
+				}
+				if(((0 <= X && 0 <= Y && X < rect_width && Y < rect_height)) && 2 !== map[X][Y]){
+					if(1 == map[X][Y]){
+						score += Math.max(5, inc_score);
+						inc_score = 50;
+						readFrog();
+						frog++;
+					}
+					ctx.fillRect(X*10,Y*10,10,10);
+					map[X][Y] = 2;
+					queue.unshift([X,Y]);
+					X+= x_direction[direction];
+					Y+= y_direction[direction];
+					if(frog < queue.length){
+						dir = queue.pop();
+						map[dir[0]][dir[1]] = 0;
+						ctx.clearRect(dir[0] * 10, dir[1] * 10, 10, 10);
+						ctx.fillStyle = snake_colour
+					}
+				}
+				else if(!tn.length){
+					var msg_score = document.getElementById("msg");
+					var msg_header = document.getElementById("header");
+					if(cur_high_score != null){
+						if(score >= parseInt(localStorage.getItem("high_score"))){
+							localStorage.setItem("high_score", score);
+							localStorage.setItem("person", prompt("Please enter your name", "Name"));
+							window.open("fireworks.html");
+						}
+					}
+					else{
+						localStorage.setItem("high_score", score);
+						localStorage.setItem("person", prompt("Please enter your name", "Benny Schmidt"));
+						window.open("fireworks.html");
+					}
+					msg_score.style.visibility = "visible";
+					var message_string = "Thanks for playing <br/>You got a score of: <b>"+score+"</b><br/>Current High Score: <br/><b>"+parseInt(localStorage.getItem("high_score"))+"</b> ("+localStorage.getItem("person")+")<br/><br/><input type='button' style='height:50px; width:120px; font-size:20px; visibility: visible' value='Play Again' id='play_button' onclick='resetGame();' />"
+					msg_score.innerHTML = message_string;
+					msg_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + parseInt(localStorage.getItem("high_score"))  +" (" + localStorage.getItem("person")  + ")";
+
+					//document.getElementById("area").style.visibility = "hidden";
+					window.clearInterval(interval);
+					document.querySelector('canvas').style.visibility = "hidden";
+						
+				}
+			}
+			interval = window.setInterval(setGameSpeed, level);
+			document.onkeydown = function(e){
+				var code = e.keyCode - 37;
+				if(0 <= code && code <4 &&code!==tn[0]){
+					tn.unshift(code);
+				}
+				else if(-5==code){
+					if(interval){
+						window.clearInterval(interval);
+						interval = 0;
+					}
+					else{
+						interval = window.setInterval(setGameSpeed, 60);
+					}
+				}
+				else{
+					dir = sum + code;
+					if(dir==44||dir==94||dir==126||dir==171){
+						sum += code;
+					}
+					else if(dir === 218) easy = 1;
+				}
+			}
+		}
+		
+	</script>
+</head>
+<body  class="my_text" text-align: center">
+<h1 text-align: center id="header"></h1>
+<form  style="font-size:15px" id="tester" style="visibility: visible">
+	<p>What difficulty do you want to play?</p>
+	Easy<input type="radio" name="level_radio" value="easy" id="level_radio_easy" style="visibility: visible"/><br/>
+	Medium<input type="radio" name="level_radio" value="medium" id="level_radio_medium" style="visibility: visible"/><br/>
+	Hard<input type="radio" name="level_radio" value="hard" id="level_radio_hard" style="visibility: visible" /><br/><br/>
+	<input type="button" value="Start Game" onclick="startGame()" style="height: 20px;width: 100px; font-size: 10px; visibility: visible" id="start_button"/><br/><br/><br/>
+</form>
+<style>
+            
+</style>
+<div style="color: white; font-family: Helvetica; font-size: 40px; visibility: visible" id="msg"></div>
+<canvas id="area" width="550" height="350">your browser is shit</canvas>
+</body>
+</html>
