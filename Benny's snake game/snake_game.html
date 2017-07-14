@@ -57,20 +57,20 @@
 				if(count == colours.length){
 						count = 0;
 					}
-			}, 3500);
+			}, 8000);
 		}
 		
-		//Random Music
+		//Play Random Music
 		var lastSong = null;
 		var secondLastSong = null;
 		var selection = null;
 		var playlist = ["despacito.mp3", "shape_of_you.mp3", "never_give_up.mp3", "fireflies.mp3", "warriors.mp3", "chandelier.mp3", "team.mp3"]; // Songs in Music folder
-		var player = document.getElementById("audioplayer"); // Get Audio Element
+		var player = document.getElementById("audioplayer");
 		player.autoplay = true;
 		player.addEventListener("ended", selectSong); // Get a new song when song ends
 
 		function selectSong(){
-			while(selection == lastSong || selection == secondLastSong){ // Repeat until different song is selected
+			while(selection == lastSong || selection == secondLastSong){
 				selection = Math.floor(Math.random() * playlist.length);
 			}
 			secondLastSong = lastSong;
@@ -78,8 +78,8 @@
 			player.src = "Music/" + playlist[selection];
 		}
 
-		selectSong(); //Select initial song
-		player.play(); //Start Song
+		selectSong();
+		player.play();
 		var colours = ['#ff0077','green', '#b000cc', 'blue', '#ff0000',]; //Colours for the background
 		var count = 0;
 		var rect_width = 55;
@@ -96,10 +96,8 @@
 			document.getElementById("msg").style.visibility = "hidden";
 			document.getElementById("play_button").style.visibility = "hidden";
 			var msg_score = document.getElementById("msg");
-			msg_score.innerHTML = "";
-			var ctx = document.getElementById("area").getContext("2d");
-			
-			//Gets highscore in case the previous highscore was brocken
+			msg_score.innerHTML = "";	
+			//Get highscore in case the previous highscore was brocken
 			high_score = localStorage.getItem("high_score");
 			person = localStorage.getItem("person");
 		}
@@ -132,12 +130,11 @@
 			document.querySelector('canvas').style.visibility = "visible";
 			document.querySelector('h1').style.visibility = "hidden";
 
-			
-			var dir;
+			var head;
 			var moves = [];
 			var queue = [];
-			var cur_high_score = localStorage.getItem("high_score");
-			var cur_person = localStorage.getItem("person");
+			var high_score = localStorage.getItem("high_score");
+			var person = localStorage.getItem("person");
 			var level = levelNum;
 			var inc_score = 50;
 			var snake_colour = "#000000"
@@ -158,7 +155,7 @@
 			var ctx = c.getContext("2d");
 
 			// Creates a map of the playing area
-			for(i=0; i < rect_width; i++){
+			for(i = 0; i < rect_width; i++){
 				map[i] = [];
 			}
 
@@ -178,12 +175,12 @@
 			}
 			makeFood();
 
-			function setGameSpeed(){
+			function nextBlock(){
 				--inc_score;
 				if(moves.length > 0){
-					dir = moves.pop();
-					if((dir %2) !== (direction % 2)){
-						direction = dir;
+					head = moves.pop();
+					if((head % 2) !== (direction % 2)){
+						direction = head;
 					}
 				}
 
@@ -201,7 +198,7 @@
 					Y = 0;
 				}
 
-				//Snake moving
+				//Snake still moving
 				if(map[X][Y] != 2){
 					//Snake ate food
 					if(map[X][Y] == 1){
@@ -217,17 +214,26 @@
 					X += x_direction[direction];
 					Y += y_direction[direction];
 					if(food < queue.length){
-						dir = queue.pop();
-						map[dir[0]][dir[1]] = 0;
-						ctx.clearRect(dir[0] * 10, dir[1] * 10, 10, 10);
+						head = queue.pop();
+						map[head[0]][head[1]] = 0;
+						ctx.clearRect(head[0] * 10, head[1] * 10, 10, 10);
 					}
 				}
 
 				//Lost game, ate itself
-				else if(moves.length == 0){
+				else{
+					//Goes through each block and gets rid of any snake or food colour blocks from the previous game
+					var e;
+					for(e = 0; e < rect_width; e++){
+						for(j = 0; j < rect_height; j++){
+							ctx.clearRect(e * 10, j * 10, 10, 10);
+						}
+					}
+					window.clearInterval(interval);
+					document.querySelector('canvas').style.visibility = "hidden";
 					var msg_score = document.getElementById("msg");
 					var msg_header = document.getElementById("header");
-					if(cur_high_score != null){
+					if(high_score != null){
 						if(score >= parseInt(localStorage.getItem("high_score"))){
 							localStorage.setItem("high_score", score);
 							localStorage.setItem("person", prompt("Please enter your name", "Name"));
@@ -240,40 +246,31 @@
 					msg_score.style.visibility = "visible";
 					var message_string = "Thanks for playing <br/>You got a score of: <b>"+score+"</b><br/>Current High Score: <br/><b>"+parseInt(localStorage.getItem("high_score"))+"</b> ("+localStorage.getItem("person")+")<br/><br/><input type='button' style='height:50px; width:120px; font-size:20px; visibility: visible' value='Play Again' id='play_button' onclick='resetGame();' />"
 					msg_score.innerHTML = message_string;
-					msg_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + parseInt(localStorage.getItem("high_score"))  +" (" + localStorage.getItem("person")  + ")";
-
-					//Goes through each block and gets rid of any snake or food colour blocks from the previous game
-					var e;
-					for(e = 0; e < rect_width; e++){
-						for(j = 0; j < rect_height; j++){
-							ctx.clearRect(e * 10, j * 10, 10, 10);
-						}
-					}
-					queue = [];
-					window.clearInterval(interval);
-					document.querySelector('canvas').style.visibility = "hidden";
-						
+					msg_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + parseInt(localStorage.getItem("high_score"))  +" (" + localStorage.getItem("person")  + ")";	
 				}
 			}
-			interval = window.setInterval(setGameSpeed, level);
-			document.onkeydown = function(e){
-				var code = e.keyCode - 37;
-				if(0 <= code && code < 4 && code !== moves[0]){
-					moves.unshift(code);
+			interval = window.setInterval(nextBlock, level);
+
+			//Move snake when pressing arrow keys
+			var previous = null;
+			document.onkeydown = function(key){
+				var code = key.keyCode;
+				if(previous == code)
+					return;
+				previous = code;
+				if(code >= 37 && code < 41 && code != (moves[0] - 37)){
+					moves.unshift(code - 37);
 				}
-				else if(-5 == code || 43 == code){
-					if(interval){
+				//Hit space or p, pauses/unpauses the game
+				else if(code == 32 || code == 80){
+					if(interval != null){
 						window.clearInterval(interval);
-						interval = 0;
+						interval = null;
+						previous = null;
 					}
 					else{
-						interval = window.setInterval(setGameSpeed, level);
-					}
-				}
-				else{
-					dir = sum + code;
-					if(dir == 44 || dir == 94 || dir == 126 || dir == 171){
-						sum += code;
+						interval = window.setInterval(nextBlock, level);
+						previous = null;
 					}
 				}
 			}
