@@ -18,7 +18,7 @@
 		body {
 			padding: 0;
 			margin: 0;
-			background: blue;
+			/*background: blue;*/
 			transition: background 1.5s;
 		}
 		h1 {
@@ -38,25 +38,35 @@
 		}
 	</style>
 	<script type="text/javascript">
-	window.onload = function(){
-		//Sets up the header to display the current highscore, displays None if no one has played the game yet
-		var get_header = document.getElementById("header");
-		var currentHighScore = localStorage.getItem("high_score");
-		var currentPersonHighScore = localStorage.getItem("person");
-		if(currentPersonHighScore == undefined){
-			get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: None";
+		window.onload = function(){
+			//Sets up the header to display the current highscore, displays None if no one has played the game yet
+			var get_header = document.getElementById("header");
+			var currentHighScore = localStorage.getItem("high_score");
+			var currentPersonHighScore = localStorage.getItem("person");
+			if(currentPersonHighScore == undefined){
+				get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: None";
+			}
+			else{
+				get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + currentHighScore  +" (" + currentPersonHighScore  + ")";
+				}
+			// Changes the background colour with the colours in the list
+			count = 0;
+			setInterval(function(){
+				document.querySelector('body').style.background = colours[count];
+				count++;
+				if(count == colours.length){
+						count = 0;
+					}
+			}, 3500);
 		}
-		else{
-			get_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + currentHighScore  +" (" + currentPersonHighScore  + ")";
-		}
-	}
+		
 		//Random Music
 		var lastSong = null;
 		var secondLastSong = null;
 		var selection = null;
 		var playlist = ["despacito.mp3", "shape_of_you.mp3", "never_give_up.mp3", "fireflies.mp3", "warriors.mp3", "chandelier.mp3", "team.mp3"]; // Songs in Music folder
 		var player = document.getElementById("audioplayer"); // Get Audio Element
-		player.autoplay=true;
+		player.autoplay = true;
 		player.addEventListener("ended", selectSong); // Get a new song when song ends
 
 		function selectSong(){
@@ -72,7 +82,6 @@
 		player.play(); //Start Song
 		var colours = ['#ff0077','green', '#b000cc', 'blue', '#ff0000',]; //Colours for the background
 		var count = 0;
-		var dir;
 		var rect_width = 55;
 		var rect_height = 35;
 
@@ -89,12 +98,7 @@
 			var msg_score = document.getElementById("msg");
 			msg_score.innerHTML = "";
 			var ctx = document.getElementById("area").getContext("2d");
-			//Goes through each block and gets rid of any snake or food colour blocks from the previous game
-			for(i=0;i<rect_width;i++){
-				for(j=0;j<rect_height;j++){
-					ctx.clearRect(i * 10, j * 10, 10, 10);
-				}
-			}
+			
 			//Gets highscore in case the previous highscore was brocken
 			high_score = localStorage.getItem("high_score");
 			person = localStorage.getItem("person");
@@ -128,26 +132,18 @@
 			document.querySelector('canvas').style.visibility = "visible";
 			document.querySelector('h1').style.visibility = "hidden";
 
-			// Changes the background colour with the colours in the list
-			count = 0;
-			setInterval(function(){
-				document.querySelector('body').style.background = colours[count];
-				count++;
-				if(count == colours.length){
-						count = 0;
-				}
-			}, 3500);
-
+			
+			var dir;
+			var moves = [];
+			var queue = [];
 			var cur_high_score = localStorage.getItem("high_score");
 			var cur_person = localStorage.getItem("person");
 			var level = levelNum;
 			var inc_score = 50;
 			var snake_colour = "#000000"
 			var eat_colour = "#ffff00"
-			var tn = [];
 			var x_direction = [-1,0,1,0];
 			var y_direction = [0,-1,0,1];
-			var queue = [];
 			var food = 1;
 			var map = [];
 			var MR = Math.random;
@@ -184,8 +180,8 @@
 
 			function setGameSpeed(){
 				--inc_score;
-				if(tn.length){
-					dir = tn.pop();
+				if(moves.length > 0){
+					dir = moves.pop();
 					if((dir %2) !== (direction % 2)){
 						direction = dir;
 					}
@@ -205,14 +201,16 @@
 					Y = 0;
 				}
 
-				//Ate food
+				//Snake moving
 				if(map[X][Y] != 2){
+					//Snake ate food
 					if(map[X][Y] == 1){
 						score += Math.max(5, inc_score);
 						inc_score = 50;
 						makeFood();
 						food++;
 					}
+					ctx.fillStyle = snake_colour
 					ctx.fillRect(X*10,Y*10,10,10);
 					map[X][Y] = 2;
 					queue.unshift([X,Y]);
@@ -222,32 +220,36 @@
 						dir = queue.pop();
 						map[dir[0]][dir[1]] = 0;
 						ctx.clearRect(dir[0] * 10, dir[1] * 10, 10, 10);
-						ctx.fillStyle = snake_colour
 					}
 				}
 
 				//Lost game, ate itself
-				else if(!tn.length){
+				else if(moves.length == 0){
 					var msg_score = document.getElementById("msg");
 					var msg_header = document.getElementById("header");
 					if(cur_high_score != null){
 						if(score >= parseInt(localStorage.getItem("high_score"))){
 							localStorage.setItem("high_score", score);
 							localStorage.setItem("person", prompt("Please enter your name", "Name"));
-							window.open("fireworks.html");
 						}
 					}
 					else{
 						localStorage.setItem("high_score", score);
-						localStorage.setItem("person", prompt("Please enter your name", "Benny Schmidt"));
-						window.open("fireworks.html");
+						localStorage.setItem("person", prompt("Please enter your name", "Name"));
 					}
 					msg_score.style.visibility = "visible";
 					var message_string = "Thanks for playing <br/>You got a score of: <b>"+score+"</b><br/>Current High Score: <br/><b>"+parseInt(localStorage.getItem("high_score"))+"</b> ("+localStorage.getItem("person")+")<br/><br/><input type='button' style='height:50px; width:120px; font-size:20px; visibility: visible' value='Play Again' id='play_button' onclick='resetGame();' />"
 					msg_score.innerHTML = message_string;
 					msg_header.innerHTML = "Welcome to Snake!!!<br/>Current Highscore: " + parseInt(localStorage.getItem("high_score"))  +" (" + localStorage.getItem("person")  + ")";
 
-					//document.getElementById("area").style.visibility = "hidden";
+					//Goes through each block and gets rid of any snake or food colour blocks from the previous game
+					var e;
+					for(e = 0; e < rect_width; e++){
+						for(j = 0; j < rect_height; j++){
+							ctx.clearRect(e * 10, j * 10, 10, 10);
+						}
+					}
+					queue = [];
 					window.clearInterval(interval);
 					document.querySelector('canvas').style.visibility = "hidden";
 						
@@ -256,16 +258,16 @@
 			interval = window.setInterval(setGameSpeed, level);
 			document.onkeydown = function(e){
 				var code = e.keyCode - 37;
-				if(0 <= code && code < 4 && code !== tn[0]){
-					tn.unshift(code);
+				if(0 <= code && code < 4 && code !== moves[0]){
+					moves.unshift(code);
 				}
-				else if(-5 == code){
+				else if(-5 == code || 43 == code){
 					if(interval){
 						window.clearInterval(interval);
 						interval = 0;
 					}
 					else{
-						interval = window.setInterval(setGameSpeed, 60);
+						interval = window.setInterval(setGameSpeed, level);
 					}
 				}
 				else{
